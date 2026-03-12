@@ -15,7 +15,7 @@ class TestConfigDefaults(unittest.TestCase):
 
     def test_default_whisper_model(self):
         cfg = Config()
-        self.assertEqual(cfg.whisper_model_alias, "whisper-base")
+        self.assertEqual(cfg.whisper_model_alias, "whisper-tiny")
 
     def test_default_input_mode(self):
         cfg = Config()
