@@ -215,7 +215,7 @@ python -m src.app --web --no-gui
 | Variable | Default | Description |
 |---|---|---|
 | `FOUNDRY_LOCAL_BASE_URL` | *(auto-detected via SDK)* | Override the Foundry Local endpoint (e.g. `http://127.0.0.1:5273/v1`) |
-| `FOUNDRY_MODEL` | `phi-4-mini` | Chat model alias |
+| `FOUNDRY_MODEL` | `qwen2.5-coder-0.5b` | Chat model alias |
 | `FOUNDRY_WHISPER_MODEL` | `whisper-small` | Whisper model alias |
 | `INPUT_MODE` | `text` | Default input mode |
 | `WEB_PORT` | `8080` | Port for the web server |
