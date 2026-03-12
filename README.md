@@ -1,5 +1,12 @@
 # Robot Arm Simulator with Foundry Local LLM Brain
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Foundry Local](https://img.shields.io/badge/Foundry%20Local-on--device%20AI-blueviolet?logo=microsoft&logoColor=white)](https://foundrylocal.ai)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-78%20passed-brightgreen?logo=pytest&logoColor=white)](#testing)
+[![FastAPI](https://img.shields.io/badge/FastAPI-web%20UI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PyBullet](https://img.shields.io/badge/PyBullet-simulation-orange)](https://pybullet.org)
+
 A PyBullet robot-arm simulation controlled by natural-language commands.
 The "brain" runs **entirely on-device** via [Foundry Local](https://foundrylocal.ai) –
 no cloud APIs, no API keys.
