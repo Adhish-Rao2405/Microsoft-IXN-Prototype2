@@ -347,7 +347,7 @@ python -m src.app --mode voice --record-seconds 10
 | `close_gripper` | `force` (default 40.0) | Close the gripper |
 | `pick` | `object` (required) | Full pick sequence: approach → descend → grip → lift |
 | `place` | `target_xyz` (required) | Place the held object at a location |
-| `reset` | *(none)* | Return to neutral pose, open gripper |
+| `reset` | *(none)* | Return to neutral pose, open gripper, and reset all objects to their original positions |
 | `describe_scene` | *(none)* | List all scene objects and their positions |
 
 ---

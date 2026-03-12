@@ -144,6 +144,14 @@ class Scene:
         obj = self.objects.get(name)
         return obj.body_id if obj else None
 
+    def reset_objects(self) -> None:
+        """Move every scene object back to its original spawn position."""
+        for obj in self.objects.values():
+            p.resetBasePositionAndOrientation(
+                obj.body_id, obj.spawn_pos, [0, 0, 0, 1],
+                physicsClientId=self._cid,
+            )
+
     def find_object_by_substring(self, query: str) -> Optional[str]:
         """Fuzzy match: return the first object whose name contains *query*."""
         q = query.lower()

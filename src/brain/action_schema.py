@@ -41,7 +41,7 @@ TOOL_SCHEMAS: Dict[str, Dict[str, Any]] = {
         },
     },
     "reset": {
-        "description": "Return the robot to its neutral position and open gripper.",
+        "description": "Return the robot to its neutral position, open gripper, and reset all objects to their original positions.",
         "args": {},
     },
     "describe_scene": {

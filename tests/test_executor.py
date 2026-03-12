@@ -50,6 +50,7 @@ class TestDispatch(unittest.TestCase):
         ex = _make_executor()
         ex.execute_plan([{"tool": "reset", "args": {}}])
         ex._robot.reset.assert_called_once()
+        ex._scene.reset_objects.assert_called_once()
 
     def test_open_gripper(self):
         ex = _make_executor()

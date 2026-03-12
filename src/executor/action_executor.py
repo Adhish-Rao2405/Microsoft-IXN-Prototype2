@@ -94,6 +94,7 @@ class ActionExecutor:
 
     def _do_reset(self, _args: Dict) -> Dict:
         self._robot.reset()
+        self._scene.reset_objects()
         return {"success": True}
 
     def _do_describe_scene(self, _args: Dict) -> Any:
