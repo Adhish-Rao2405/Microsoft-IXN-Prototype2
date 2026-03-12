@@ -22,6 +22,14 @@ Multi:  {{"type":"plan","actions":[{{"tool":"describe_scene","args":{{}}}},{{"to
 """
 
 
+_SHORTCUTS: Dict[re.Pattern, List[Dict[str, Any]]] = {
+    re.compile(r"^reset$", re.IGNORECASE): [{"tool": "reset", "args": {}}],
+    re.compile(r"^describe[\s_]?scene$", re.IGNORECASE): [{"tool": "describe_scene", "args": {}}],
+    re.compile(r"^open[\s_]?gripper$", re.IGNORECASE): [{"tool": "open_gripper", "args": {}}],
+    re.compile(r"^close[\s_]?gripper$", re.IGNORECASE): [{"tool": "close_gripper", "args": {}}],
+}
+
+
 class Planner:
     """Converts user text into a validated list of actions."""
 
@@ -30,8 +38,21 @@ class Planner:
         self._scene = scene
         self._history: List[Dict[str, str]] = []
 
+    @staticmethod
+    def _try_shortcut(text: str) -> Optional[List[Dict[str, Any]]]:
+        """Return actions for trivial commands without calling the LLM."""
+        text = text.strip()
+        for pattern, actions in _SHORTCUTS.items():
+            if pattern.match(text):
+                return actions
+        return None
+
     def plan(self, user_text: str) -> Optional[List[Dict[str, Any]]]:
         """Return a validated action list for *user_text*, or None."""
+        shortcut = self._try_shortcut(user_text)
+        if shortcut is not None:
+            return shortcut
+
         system = SYSTEM_PROMPT.format(schema=schema_prompt_block())
 
         messages = [

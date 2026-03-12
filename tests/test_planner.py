@@ -50,5 +50,45 @@ class TestExtractJson(unittest.TestCase):
         self.assertIn("plan", result)
 
 
+class TestTryShortcut(unittest.TestCase):
+    """Planner._try_shortcut should match trivial commands without LLM."""
+
+    def test_reset(self):
+        result = Planner._try_shortcut("reset")
+        self.assertEqual(result, [{"tool": "reset", "args": {}}])
+
+    def test_reset_case_insensitive(self):
+        result = Planner._try_shortcut("Reset")
+        self.assertEqual(result, [{"tool": "reset", "args": {}}])
+
+    def test_describe_scene(self):
+        result = Planner._try_shortcut("describe scene")
+        self.assertEqual(result, [{"tool": "describe_scene", "args": {}}])
+
+    def test_describe_scene_underscore(self):
+        result = Planner._try_shortcut("describe_scene")
+        self.assertEqual(result, [{"tool": "describe_scene", "args": {}}])
+
+    def test_open_gripper(self):
+        result = Planner._try_shortcut("open gripper")
+        self.assertEqual(result, [{"tool": "open_gripper", "args": {}}])
+
+    def test_close_gripper(self):
+        result = Planner._try_shortcut("close gripper")
+        self.assertEqual(result, [{"tool": "close_gripper", "args": {}}])
+
+    def test_no_shortcut_for_complex(self):
+        result = Planner._try_shortcut("pick up the red cube")
+        self.assertIsNone(result)
+
+    def test_no_shortcut_for_empty(self):
+        result = Planner._try_shortcut("")
+        self.assertIsNone(result)
+
+    def test_whitespace_stripped(self):
+        result = Planner._try_shortcut("  reset  ")
+        self.assertEqual(result, [{"tool": "reset", "args": {}}])
+
+
 if __name__ == "__main__":
     unittest.main()
