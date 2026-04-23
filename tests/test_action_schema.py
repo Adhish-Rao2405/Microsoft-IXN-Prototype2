@@ -4,9 +4,12 @@ import unittest
 
 from src.brain.action_schema import (
     ALLOWED_TOOLS,
+    ALLOWED_WORKCELL_ACTIONS,
     TOOL_SCHEMAS,
+    WORKCELL_ACTION_SCHEMAS,
     schema_prompt_block,
     validate_plan,
+    validate_workcell_plan,
 )
 
 
@@ -138,3 +141,162 @@ class TestValidatePlanRejections(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ── Workcell schema tests (Phase 3) ─────────────────────────────────
+
+
+class TestWorkcellActionSchemas(unittest.TestCase):
+    EXPECTED_ACTIONS = {
+        "inspect_workcell", "start_conveyor", "stop_conveyor",
+        "wait", "pick_target", "place_in_bin", "reset_workcell",
+    }
+
+    def test_expected_actions_present(self):
+        self.assertEqual(self.EXPECTED_ACTIONS, ALLOWED_WORKCELL_ACTIONS)
+
+    def test_allowed_set_matches_schema_dict(self):
+        self.assertEqual(ALLOWED_WORKCELL_ACTIONS, set(WORKCELL_ACTION_SCHEMAS.keys()))
+
+    def test_each_schema_has_description(self):
+        for name, info in WORKCELL_ACTION_SCHEMAS.items():
+            self.assertIn("description", info, f"{name} missing description")
+
+    def test_each_schema_has_required_params_list(self):
+        for name, info in WORKCELL_ACTION_SCHEMAS.items():
+            self.assertIsInstance(info.get("required_params"), list, f"{name} missing required_params")
+
+    def test_each_schema_has_param_types_dict(self):
+        for name, info in WORKCELL_ACTION_SCHEMAS.items():
+            self.assertIsInstance(info.get("param_types"), dict, f"{name} missing param_types")
+
+    def test_workcell_actions_not_in_legacy_tools(self):
+        self.assertTrue(ALLOWED_WORKCELL_ACTIONS.isdisjoint(ALLOWED_TOOLS))
+
+
+class TestValidateWorkcellPlanValid(unittest.TestCase):
+    def test_inspect_workcell(self):
+        raw = {"actions": [{"action": "inspect_workcell", "parameters": {}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["action"], "inspect_workcell")
+        self.assertEqual(result[0]["parameters"], {})
+
+    def test_start_conveyor(self):
+        raw = {"actions": [{"action": "start_conveyor", "parameters": {"speed": 0.5}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0]["parameters"]["speed"], 0.5)
+
+    def test_stop_conveyor(self):
+        raw = {"actions": [{"action": "stop_conveyor", "parameters": {}}]}
+        self.assertIsNotNone(validate_workcell_plan(raw))
+
+    def test_wait(self):
+        raw = {"actions": [{"action": "wait", "parameters": {"seconds": 2.0}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0]["parameters"]["seconds"], 2.0)
+
+    def test_pick_target(self):
+        raw = {"actions": [{"action": "pick_target", "parameters": {"object_id": "obj_1"}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0]["parameters"]["object_id"], "obj_1")
+
+    def test_place_in_bin(self):
+        raw = {"actions": [{"action": "place_in_bin", "parameters": {"bin_id": "bin_a"}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0]["parameters"]["bin_id"], "bin_a")
+
+    def test_reset_workcell(self):
+        raw = {"actions": [{"action": "reset_workcell", "parameters": {}}]}
+        self.assertIsNotNone(validate_workcell_plan(raw))
+
+    def test_multi_action_plan(self):
+        raw = {"actions": [
+            {"action": "stop_conveyor", "parameters": {}},
+            {"action": "pick_target", "parameters": {"object_id": "obj_1"}},
+            {"action": "place_in_bin", "parameters": {"bin_id": "bin_a"}},
+            {"action": "start_conveyor", "parameters": {"speed": 0.3}},
+        ]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result), 4)
+
+    def test_speed_coerced_to_float(self):
+        raw = {"actions": [{"action": "start_conveyor", "parameters": {"speed": 1}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result[0]["parameters"]["speed"], float)
+
+    def test_seconds_coerced_to_float(self):
+        raw = {"actions": [{"action": "wait", "parameters": {"seconds": 3}}]}
+        result = validate_workcell_plan(raw)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result[0]["parameters"]["seconds"], float)
+
+
+class TestValidateWorkcellPlanRejections(unittest.TestCase):
+    def test_unknown_action(self):
+        raw = {"actions": [{"action": "fly_away", "parameters": {}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_missing_required_param_speed(self):
+        raw = {"actions": [{"action": "start_conveyor", "parameters": {}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_missing_required_param_seconds(self):
+        raw = {"actions": [{"action": "wait", "parameters": {}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_missing_required_param_object_id(self):
+        raw = {"actions": [{"action": "pick_target", "parameters": {}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_missing_required_param_bin_id(self):
+        raw = {"actions": [{"action": "place_in_bin", "parameters": {}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_extra_key_in_action(self):
+        raw = {"actions": [{"action": "stop_conveyor", "parameters": {}, "sneaky": True}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_extra_parameter_key(self):
+        raw = {"actions": [{"action": "stop_conveyor", "parameters": {"extra": 1}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_empty_actions_list(self):
+        raw = {"actions": []}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_missing_actions_key(self):
+        raw = {"action": "stop_conveyor", "parameters": {}}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_non_dict_input(self):
+        self.assertIsNone(validate_workcell_plan(42))
+
+    def test_invalid_json_string(self):
+        self.assertIsNone(validate_workcell_plan("{bad json"))
+
+    def test_one_invalid_action_rejects_whole_plan(self):
+        raw = {"actions": [
+            {"action": "stop_conveyor", "parameters": {}},
+            {"action": "explode", "parameters": {}},
+        ]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_non_dict_parameters(self):
+        raw = {"actions": [{"action": "stop_conveyor", "parameters": "bad"}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_rejects_string_speed(self):
+        raw = {"actions": [{"action": "start_conveyor", "parameters": {"speed": "1.0"}}]}
+        self.assertIsNone(validate_workcell_plan(raw))
+
+    def test_rejects_string_seconds(self):
+        raw = {"actions": [{"action": "wait", "parameters": {"seconds": "2"}}]}
+        self.assertIsNone(validate_workcell_plan(raw))

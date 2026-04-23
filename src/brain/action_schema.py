@@ -52,6 +52,138 @@ TOOL_SCHEMAS: Dict[str, Dict[str, Any]] = {
 
 ALLOWED_TOOLS = set(TOOL_SCHEMAS.keys())
 
+# ── Workcell action schemas (Prototype 2.1) ──────────────────────────
+#
+# These actions use the {"action": "...", "parameters": {...}} wire format
+# as defined in specs/001-prototype-2.1/action-schema.md.
+# They are separate from the legacy tool/args schema above.
+
+WORKCELL_ACTION_SCHEMAS: Dict[str, Dict[str, Any]] = {
+    "inspect_workcell": {
+        "description": "Return the current workcell state snapshot.",
+        "required_params": [],
+        "optional_params": [],
+        "param_types": {},
+    },
+    "start_conveyor": {
+        "description": "Start the conveyor at the given speed (m/s, > 0).",
+        "required_params": ["speed"],
+        "optional_params": [],
+        "param_types": {"speed": float},
+    },
+    "stop_conveyor": {
+        "description": "Stop the conveyor belt.",
+        "required_params": [],
+        "optional_params": [],
+        "param_types": {},
+    },
+    "wait": {
+        "description": "Pause execution for the given number of simulated seconds (> 0).",
+        "required_params": ["seconds"],
+        "optional_params": [],
+        "param_types": {"seconds": float},
+    },
+    "pick_target": {
+        "description": "Pick the object with the given object_id from the pick zone.",
+        "required_params": ["object_id"],
+        "optional_params": [],
+        "param_types": {"object_id": str},
+    },
+    "place_in_bin": {
+        "description": "Place the currently held object into the given bin.",
+        "required_params": ["bin_id"],
+        "optional_params": [],
+        "param_types": {"bin_id": str},
+    },
+    "reset_workcell": {
+        "description": "Reset the workcell to its initial state.",
+        "required_params": [],
+        "optional_params": [],
+        "param_types": {},
+    },
+}
+
+ALLOWED_WORKCELL_ACTIONS: set = set(WORKCELL_ACTION_SCHEMAS.keys())
+
+
+def validate_workcell_plan(raw: Any) -> Optional[List[Dict[str, Any]]]:
+    """Parse and validate a workcell action plan.
+
+    Accepted shape::
+
+        {"actions": [{"action": "pick_target", "parameters": {"object_id": "obj_1"}}]}
+
+    Returns a list of validated ``{"action": str, "parameters": dict}`` dicts,
+    or ``None`` if validation fails.
+    """
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+
+    if not isinstance(raw, dict):
+        return None
+
+    actions = raw.get("actions")
+    if not isinstance(actions, list) or len(actions) == 0:
+        return None
+
+    validated: List[Dict[str, Any]] = []
+    for act in actions:
+        v = _validate_workcell_action(act)
+        if v is None:
+            return None
+        validated.append(v)
+
+    return validated
+
+
+def _validate_workcell_action(act: Any) -> Optional[Dict[str, Any]]:
+    """Validate a single workcell action dict."""
+    if not isinstance(act, dict):
+        return None
+
+    # Reject extra top-level keys beyond "action" and "parameters".
+    if set(act.keys()) - {"action", "parameters"}:
+        return None
+
+    action_name = act.get("action")
+    if action_name not in ALLOWED_WORKCELL_ACTIONS:
+        return None
+
+    schema = WORKCELL_ACTION_SCHEMAS[action_name]
+    parameters = act.get("parameters", {})
+    if not isinstance(parameters, dict):
+        return None
+
+    # Reject extra parameter keys.
+    allowed_keys = set(schema["required_params"]) | set(schema["optional_params"])
+    if set(parameters.keys()) - allowed_keys:
+        return None
+
+    # Check required parameters are present and of the correct type.
+    clean: Dict[str, Any] = {}
+    for key in schema["required_params"]:
+        if key not in parameters:
+            return None
+        val = parameters[key]
+        expected_type = schema["param_types"].get(key)
+        if expected_type is not None:
+            if expected_type is float:
+                # Accept numeric inputs only; reject string-based coercion.
+                if isinstance(val, bool) or not isinstance(val, (int, float)):
+                    return None
+                val = float(val)
+            elif expected_type is str:
+                if not isinstance(val, str):
+                    return None
+            elif not isinstance(val, expected_type):
+                return None
+        clean[key] = val
+
+    return {"action": action_name, "parameters": clean}
+
 
 def schema_prompt_block() -> str:
     """Return a human-readable description of the schema for the system prompt."""
