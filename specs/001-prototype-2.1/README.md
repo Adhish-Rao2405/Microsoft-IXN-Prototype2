@@ -9,6 +9,8 @@ This directory contains the implementation baseline for Microsoft IXN Prototype 
 - [action-schema.md](action-schema.md): Approved planner actions and executor contract.
 - [workcell-state.md](workcell-state.md): Structured workcell state schema and refresh requirements.
 - [tasks.md](tasks.md): Phase-by-phase implementation plan and acceptance checklist.
+- [phase7-spec.md](phase7-spec.md): Phase 7 deterministic end-to-end integration test scope and acceptance criteria.
+- [tasks-phase7.md](tasks-phase7.md): Phase 7 implementation checklist and regression record.
 - [evaluation.md](evaluation.md): Acceptance criteria, metrics, fixed scenarios, risks, and future extensions.
 
 ## Baseline Goal

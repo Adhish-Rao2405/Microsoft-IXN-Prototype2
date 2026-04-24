@@ -9,12 +9,13 @@ Implement phases in this order:
 3. Workcell state abstraction
 4. Executor updates
 5. Safety rules
-6. Planner prompt update
-7. Replanning loop
+6. Planner and orchestration pipeline
+7. End-to-end deterministic workcell scenario tests
 8. UI updates
+9. Evaluation
 
 Do not modify planner or agent orchestration early. Phase 1 and Phase 2 should be simulation and state work only.
-Do not modify web UI files before Phase 7.
+Do not modify web UI files before Phase 8.
 Do not modify planner or orchestrator before their listed phases.
 Standalone simulation and state components must be unit-testable before live PyBullet integration.
 
@@ -244,7 +245,7 @@ Done when:
 
 - Planner parsing tests still pass and workcell action examples parse correctly.
 
-## Phase 6 - Replanning
+## Phase 6 - Planner and Orchestration Pipeline
 
 ### Task 6.1: Refresh state after each action
 
@@ -279,9 +280,59 @@ Done when:
 
 - Tests prove at least one failed step triggers replanning.
 
-## Phase 7 - UI Updates
+## Phase 7 - End-to-End Deterministic Workcell Scenario Tests
 
-### Task 7.1: Add workcell state API and WebSocket update
+### Task 7.1: Add deterministic end-to-end scenario tests
+
+Files:
+
+- `tests/test_workcell_e2e_scenarios.py`
+- `specs/001-prototype-2.1/phase7-spec.md`
+- `specs/001-prototype-2.1/tasks-phase7.md`
+
+Requirements:
+
+- Use the real deterministic workcell stack where practical: state read model, planner, safety validation, orchestration pipeline, and executor.
+- Do not introduce new intelligence, heuristics, retries, fallback planning, optimization, GUI behavior, or PyBullet coupling.
+- Prefer no production-code changes.
+- Modify production code only if a failing integration test proves a real boundary bug.
+- Use real constructors and helper methods from the existing implementation instead of inventing parallel test-only APIs.
+- Keep the integration headless and deterministic.
+
+Done when:
+
+- End-to-end scenario tests prove the stack works from state through planning, safety, orchestration, and execution.
+
+### Task 7.2: Cover baseline deterministic scenarios
+
+Files:
+
+- `tests/test_workcell_e2e_scenarios.py`
+
+Requirements:
+
+- Cover empty workcell with no execution.
+- Cover single eligible object full flow.
+- Cover multiple eligible objects with deterministic ordering.
+- Cover unknown type routing to default or reject bin if supported by the Phase 5 planner and Phase 4 safety rules.
+- Cover processed-object skipping.
+- Cover safety rejection preventing execution.
+- Cover full-plan validation before execution with no validate-execute interleaving.
+- Cover determinism across repeated runs.
+- Guard against legacy LLM coupling where practical.
+- Guard against PyBullet or GUI coupling.
+
+Done when:
+
+- Scenario tests cover the deterministic integration contract without broadening system behavior.
+
+## Phase 7 Checkpoint
+
+Do not proceed to Phase 8 until deterministic end-to-end scenario tests pass for the Phase 1-6 workcell stack.
+
+## Phase 8 - UI Updates
+
+### Task 8.1: Add workcell state API and WebSocket update
 
 Files:
 
@@ -298,7 +349,7 @@ Done when:
 
 - Backend tests prove workcell state is available without requiring Foundry Local.
 
-### Task 7.2: Add workcell UI panel
+### Task 8.2: Add workcell UI panel
 
 Files:
 
@@ -320,13 +371,13 @@ Done when:
 
 - Browser UI reflects workcell state without blocking command execution.
 
-## Phase 8 - Evaluation
+## Phase 9 - Evaluation
 
-### Task 8.1: Add baseline scenarios
+### Task 9.1: Add baseline scenarios and regression reporting
 
 Files:
 
-- `tests/test_replanning.py`
+- `tests/test_workcell_e2e_scenarios.py`
 - Optional `docs/evaluation-prototype-2.1.md`
 
 Requirements:
@@ -336,6 +387,7 @@ Requirements:
 - Cover invalid pick while conveyor is running.
 - Cover missing object reference.
 - Cover reset and resume.
+- Record final focused regression result for the deterministic workcell stack.
 
 Done when:
 
