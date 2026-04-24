@@ -10,6 +10,7 @@ import json
 
 import pytest
 
+from src.planning.foundry_model_client import FoundryModelClient
 from src.planning.model_planner import ModelPlanner
 from src.planning.types import Action, Plan
 from src.simulation.bins import BinRegistry
@@ -308,3 +309,43 @@ class TestModelPlannerNoBannedImports:
         assert "open(" not in source
         assert ".write(" not in source
         assert "write_text(" not in source
+
+
+# ---------------------------------------------------------------------------
+# Foundry bridge compatibility
+# ---------------------------------------------------------------------------
+
+
+class TestModelPlannerWithFoundryBridge:
+    class FakeFoundryClient:
+        def __init__(self, response: str) -> None:
+            self.response = response
+            self.calls: list[tuple[str, str]] = []
+
+        def complete(self, system_prompt: str, user_prompt: str) -> str:
+            self.calls.append((system_prompt, user_prompt))
+            return self.response
+
+    def test_planner_accepts_foundry_model_client_valid_json(self) -> None:
+        fake_foundry = self.FakeFoundryClient(_valid_pick_response())
+        bridge_client = FoundryModelClient(foundry_client=fake_foundry)
+        planner = ModelPlanner(bridge_client)
+
+        result = planner.plan(_make_state())
+
+        assert len(fake_foundry.calls) == 1
+        assert isinstance(result, Plan)
+        assert len(result.actions) == 1
+        assert result.actions[0].action == "pick_target"
+
+    def test_planner_with_foundry_bridge_fails_closed_on_invalid_json(self) -> None:
+        fake_foundry = self.FakeFoundryClient(_invalid_json_response())
+        bridge_client = FoundryModelClient(foundry_client=fake_foundry)
+        planner = ModelPlanner(bridge_client)
+
+        result = planner.plan(_make_state())
+
+        assert len(fake_foundry.calls) == 1
+        assert isinstance(result, Plan)
+        assert len(result.actions) == 0
+        assert planner.last_rejection_reason() is not None
