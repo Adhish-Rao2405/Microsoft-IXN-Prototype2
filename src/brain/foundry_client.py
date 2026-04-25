@@ -32,6 +32,7 @@ class FoundryClient:
     def initialise(self) -> bool:
         """Connect to Foundry Local (SDK discovery preferred, env fallback)."""
         try:
+            print(f"[foundry] selected model alias: {self._cfg.foundry_model_alias}")
             return self._init_via_sdk()
         except Exception as exc:
             print(f"[foundry] SDK init failed ({exc}), trying env/fallback…")

@@ -11,7 +11,7 @@ class TestConfigDefaults(unittest.TestCase):
 
     def test_default_model(self):
         cfg = Config()
-        self.assertEqual(cfg.foundry_model_alias, "qwen2.5-coder-0.5b")
+        self.assertEqual(cfg.foundry_model_alias, "Phi-3-mini-4k-instruct-generic-cpu:3")
 
     def test_default_whisper_model(self):
         cfg = Config()

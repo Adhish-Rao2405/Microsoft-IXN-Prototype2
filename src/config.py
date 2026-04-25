@@ -14,7 +14,7 @@ class Config:
 
     # ── Foundry Local ────────────────────────────────────────────────
     foundry_base_url: str = ""  # filled at runtime via SDK or env
-    foundry_model_alias: str = "qwen2.5-coder-0.5b"
+    foundry_model_alias: str = "Phi-3-mini-4k-instruct-generic-cpu:3"
     whisper_model_alias: str = "whisper-tiny"
     api_key: str = "not-required"
     max_completion_tokens: int = 128
@@ -62,7 +62,7 @@ def parse_args() -> Config:
     )
     p.add_argument(
         "--model",
-        default=os.getenv("FOUNDRY_MODEL", "qwen2.5-coder-0.5b"),
+        default=os.getenv("FOUNDRY_LOCAL_MODEL") or os.getenv("FOUNDRY_MODEL", "Phi-3-mini-4k-instruct-generic-cpu:3"),
         help="Foundry Local model alias for the chat brain",
     )
     p.add_argument(
@@ -112,7 +112,7 @@ def parse_args() -> Config:
 
     cfg = Config(
         input_mode=args.mode,
-        foundry_model_alias=args.model,
+    foundry_model_alias=args.model,
         whisper_model_alias=args.whisper_model,
         target_object_path=args.object,
         voice_record_seconds=args.record_seconds,
