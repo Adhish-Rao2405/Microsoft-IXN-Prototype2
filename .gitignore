@@ -34,3 +34,8 @@ models/
 
 # ── Temp test scripts ────────────────────────────────────────────
 test_whisper.py
+
+
+timings_*.json
+
+dissertation_enhanced.tex
